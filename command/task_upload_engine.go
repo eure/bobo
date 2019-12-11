@@ -36,7 +36,7 @@ func (uploadEngineTask) GetName() string {
 func (t uploadEngineTask) Run() error {
 	err := t.engine.FileUploadWithType(t.channel, t.file, t.filename, t.filetype)
 	if err != nil {
-		fmt.Printf("ERROR uploiad: %v\n", err)
+		fmt.Printf("ERROR upload: %v\n", err)
 	}
 	return err
 }

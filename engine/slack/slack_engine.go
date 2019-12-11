@@ -300,7 +300,8 @@ func (e *SlackEngine) fetchAllEmoji() error {
 }
 
 func (e *SlackEngine) logging(typ, msg string, v ...interface{}) {
-	e.logger.Infof("Slack", typ, fmt.Sprintf(msg, v...))
+	msg = "[" + typ + "]\t" + msg
+	e.logger.Infof("Slack", fmt.Sprintf(msg, v...))
 }
 
 func (e *SlackEngine) logDebug(msg string, v ...interface{}) {

@@ -7,16 +7,16 @@ init:
 
 # build binary
 build:
-	go build -o bin/bobo ./cmd/exmaplebot
+	go build -o bin/bobo ./cmd/examplebot
 
 
 # build binary for Raspberry Pi
 build-arm6:
-	GOOS=linux GOARCH=arm GOARM=6 go build -o bin/arm6 ./cmd/exmaplebot
+	GOOS=linux GOARCH=arm GOARM=6 go build -o bin/arm6 ./cmd/examplebot
 
 # run bot on local environment
 dev:
-	go run ./cmd/exmaplebot
+	go run ./cmd/examplebot
 
 # Exec golint, vet, gofmt
 lint:
