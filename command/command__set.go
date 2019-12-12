@@ -42,7 +42,6 @@ func (s *CommandSet) Exec(d CommandData) {
 	for _, comm := range s.regexpList {
 		if comm.GetRegexp().MatchString(text) {
 			comm.Exec(d)
-			return
 		}
 	}
 }
