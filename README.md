@@ -135,6 +135,7 @@ SLACK_RTM_TOKEN=xoxb-0000... go run ./main.go
     - Reply message as a thread
     - Add reaction
     - Upload file
+- [GoogleHome](https://github.com/eure/bobo-googlehome)
 
 ## Experimental Commands
 
