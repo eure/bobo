@@ -19,6 +19,7 @@ func main() {
 			command.ParrotCommand,
 			command.GoodMorningCommand,
 			command.ReactEmojiCommand,
+			command.ReloadCommand,
 			command.HelpCommand,
 		),
 	})
