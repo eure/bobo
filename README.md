@@ -28,7 +28,7 @@ bobo
 
 
 
-Slack Bot template for Golang.
+bobo is Slack Bot Kit with flexibility for Golang.
 
 
 # Install
@@ -128,6 +128,51 @@ And run it with Slack Token,
 SLACK_RTM_TOKEN=xoxb-0000... go run ./main.go
 ```
 
+## Running with self-upgrading
+
+bobo supports self-upgrading binary using [jpillora/overseer](https://github.com/jpillora/overseer).
+
+### Quick example
+
+Set these option on `RunOption` ,
+
+- `UseUpgrade = true`
+- `UpgradeFetcher = fetcher.Interface` ([see document](https://godoc.org/github.com/jpillora/overseer/fetcher#Interface))
+
+
+```go
+package main
+
+import (
+	"time"
+
+	"github.com/jpillora/overseer/fetcher"
+
+	"github.com/eure/bobo"
+	"github.com/eure/bobo/command"
+	"github.com/eure/bobo/engine/slack"
+	"github.com/eure/bobo/log"
+)
+
+// Entry Point
+func main() {
+	bobo.Run(bobo.RunOption{
+		Engine: &slack.SlackEngine{},
+		Logger: &log.StdLogger{
+			IsDebug: bobo.IsDebug(),
+		},
+		CommandSet: command.NewCommandSet(),
+		// Set upgrade options
+		UseUpgrade: true,
+		UpgradeFetcher: &fetcher.File{
+			Path:     "/usr/local/bin/my-bobo-binary", // watch the path for updating
+			Interval: 60 * time.Second,
+		},
+	})
+}
+```
+
+
 ## Supported tasks
 
 - Slack
@@ -140,3 +185,11 @@ SLACK_RTM_TOKEN=xoxb-0000... go run ./main.go
 ## Experimental Commands
 
 - [evalphobia/bobo-experiment](https://github.com/evalphobia/bobo-experiment)
+
+
+# Credit
+
+This project depends on these awesome libraries,
+
+- [github.com/nlopes/slack](https://github.com/nlopes/slack)
+- [github.com/jpillora/overseer](https://github.com/jpillora/overseer)

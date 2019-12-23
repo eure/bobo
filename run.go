@@ -6,15 +6,27 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jpillora/overseer"
+
 	"github.com/eure/bobo/errorcode"
 )
 
 // Run is entry-point of bot daemon.
 func Run(opt RunOption) {
+	switch {
+	case opt.UseUpgrade:
+		runWithUpgrading(opt)
+	default:
+		run(opt)
+	}
+}
+
+// run is entry-point of bot daemon.
+func run(opt RunOption) {
 	logger := opt.Logger
 	logger.Infof("bobo", "pid=[%d]", os.Getpid())
 	for {
-		errCode := run(opt)
+		errCode := runBot(opt)
 		logger.Errorf("bobo", "errCode=[%d]", errCode)
 		if errCode != errorcode.None {
 			os.Exit(errCode)
@@ -24,7 +36,19 @@ func Run(opt RunOption) {
 	}
 }
 
-func run(opt RunOption) (errCode int) {
+// runWithUpgrading is entry-point of bot daemon with self-upgrading binary.
+// ref: https://github.com/jpillora/overseer
+func runWithUpgrading(opt RunOption) {
+	overseer.Run(overseer.Config{
+		Program: func(state overseer.State) {
+			run(opt)
+		},
+		Fetcher: opt.UpgradeFetcher,
+		Debug:   opt.UpgradeDebug,
+	})
+}
+
+func runBot(opt RunOption) (errCode int) {
 	bot, err := NewBotWithConfig(Config{
 		Engine:             opt.Engine,
 		CommandSet:         opt.CommandSet,
