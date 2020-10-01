@@ -3,6 +3,7 @@ package command
 // CommandSet is a collection of bot commands.
 type CommandSet struct {
 	List       []CommandTemplate
+	FileUpload CommandTemplate
 	mentionMap map[string]CommandTemplate
 	regexpList []CommandTemplate
 }
@@ -10,6 +11,15 @@ type CommandSet struct {
 func NewCommandSet(templateList ...CommandTemplate) *CommandSet {
 	s := &CommandSet{
 		List: templateList,
+	}
+	s.Init()
+	return s
+}
+
+func NewCommandSetWithFileUpload(fileUpload CommandTemplate, templateList ...CommandTemplate) *CommandSet {
+	s := &CommandSet{
+		List:       templateList,
+		FileUpload: fileUpload,
 	}
 	s.Init()
 	return s
@@ -30,6 +40,11 @@ func (s *CommandSet) Init() {
 
 func (s *CommandSet) Exec(d CommandData) {
 	d.CommandSet = s
+
+	if d.IsFile && s.FileUpload != nil {
+		s.FileUpload.Exec(d)
+		return
+	}
 
 	if d.HasMyMention() {
 		if comm, ok := s.getCommandForMention(d); ok {

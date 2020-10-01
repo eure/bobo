@@ -3,7 +3,7 @@ package slack
 import (
 	"io"
 
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 
 	"github.com/eure/bobo/engine"
 )

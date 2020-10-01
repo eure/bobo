@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 
 	"github.com/eure/bobo/command"
 	"github.com/eure/bobo/engine"
@@ -132,6 +132,9 @@ func (e *SlackEngine) Run() int {
 			case *slack.MessageEvent:
 				// Event of reaction to user's message
 				e.processMessage(ev)
+			case *slack.FileSharedEvent:
+				// Event of reaction to file upload.
+				e.processFileShared(ev)
 			case *slack.DisconnectedEvent:
 				e.logging("DisconnectedEvent", "intentional=%t", ev.Intentional)
 			case *slack.LatencyReport:
@@ -147,7 +150,7 @@ func (e *SlackEngine) Run() int {
 				e.logging("InvalidAuthEvent", "Invalid credentials")
 				return errorcode.InvalidAuth
 			default:
-				// e.logDebug("Unknown Event: [%+v]", msg)
+				// e.logDebug("Unknown Event: [%T] [%+v] ", ev, msg)
 			}
 		}
 	}
@@ -175,7 +178,7 @@ func (e *SlackEngine) processMessage(ev *slack.MessageEvent) {
 
 	rawText := library.TrimSpaces(ev.Text)
 	text, isDM := e.addMentionIfDM(rawText, ev.Channel)
-	e.logDebug("processMessage rawText=[%s] text=[%s]", rawText, text)
+	e.logDebug("processMessage rawText=[%s] text=[%s] user=[%s | %s]", rawText, text, user.Name, userID)
 	mention, commText, otherText := library.SplitTextForCommand(text)
 
 	// wait for executing
@@ -192,6 +195,65 @@ func (e *SlackEngine) processMessage(ev *slack.MessageEvent) {
 		ThreadTimestamp: ev.Timestamp,
 		BotID:           e.slackBotID,
 		IsDM:            isDM,
+	}
+}
+
+// processFileShared handles file shared event.
+func (e *SlackEngine) processFileShared(ev *slack.FileSharedEvent) {
+	if ev.FileID == "" {
+		return
+	}
+
+	file, err := e.fetchFile(ev.FileID)
+	if err != nil {
+		return
+	}
+
+	userID := file.User
+	if !e.hasUser(userID) {
+		// Get ans save user's name from Slack User ID via API.
+		err := e.fetchUser(userID)
+		if err != nil {
+			return
+		}
+	}
+	// Get user's name from in-memory cache.
+	user := e.getUser(userID)
+
+	channel := ""
+	isDM := false
+	switch {
+	case len(file.Groups) > 0:
+		channel = file.Groups[0]
+	case len(file.IMs) > 0:
+		channel = file.IMs[0]
+		isDM = true
+	}
+	e.logDebug("processFileShared fileID=[%s] fileName=[%s] user=[%s | %s]", file.ID, file.Name, user.Name, userID)
+
+	// wait for executing
+	e.execChan <- command.CommandData{
+		Engine:          e,
+		SenderID:        userID,
+		SenderName:      user.Name,
+		Channel:         channel,
+		ThreadTimestamp: ev.EventTimestamp,
+		BotID:           e.slackBotID,
+		IsDM:            isDM,
+		IsFile:          true,
+		File: command.File{
+			ID:                file.ID,
+			Name:              file.Name,
+			Title:             file.Title,
+			Mimetype:          file.Mimetype,
+			ImageExifRotation: file.ImageExifRotation,
+			Filetype:          file.Filetype,
+			PrettyType:        file.PrettyType,
+			Size:              file.Size,
+			URL:               file.URLPrivate,
+			IsPublic:          file.IsPublic,
+			Permalink:         file.Permalink,
+		},
 	}
 }
 
@@ -241,6 +303,21 @@ func (e *SlackEngine) fetchUser(user string) error {
 		Phone: resp.Profile.Phone,
 	}
 	return nil
+}
+
+// fetchFile fetches file meta data via Slack API.
+func (e *SlackEngine) fetchFile(fileID string) (slack.File, error) {
+	resp, _, _, err := e.slackClient.GetFileInfo(fileID, 0, 0)
+	switch {
+	case err != nil:
+		e.logging("fetchFile", "Error on `GetFileInfo`: %s", err.Error())
+		return slack.File{}, err
+	case resp == nil:
+		err := errors.New("response is nil")
+		e.logging("fetchFile", "Error on `GetFileInfo`: %s", err.Error())
+		return slack.File{}, err
+	}
+	return *resp, nil
 }
 
 // addMentionIfDM adds bot mention into the message when it's on DM.

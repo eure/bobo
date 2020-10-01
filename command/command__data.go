@@ -22,6 +22,9 @@ type CommandData struct {
 	SenderID   string
 	SenderName string
 
+	IsFile bool // it's file upload event or not
+	File   File
+
 	// Engine's data
 	Channel         string
 	ThreadTimestamp string
@@ -46,4 +49,19 @@ func (d CommandData) GetMentionMap() map[string]CommandTemplate {
 
 func (d CommandData) GetRegexpList() []CommandTemplate {
 	return d.CommandSet.regexpList
+}
+
+// File contains metadeta of a file uploaded by user.
+type File struct {
+	ID                string
+	Name              string
+	Title             string
+	Mimetype          string
+	ImageExifRotation int
+	Filetype          string
+	PrettyType        string
+	Size              int
+	URL               string
+	IsPublic          bool
+	Permalink         string
 }

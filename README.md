@@ -191,5 +191,5 @@ func main() {
 
 This project depends on these awesome libraries,
 
-- [github.com/nlopes/slack](https://github.com/nlopes/slack)
+- [github.com/slack-go/slack](https://github.com/slack-go/slack)
 - [github.com/jpillora/overseer](https://github.com/jpillora/overseer)
